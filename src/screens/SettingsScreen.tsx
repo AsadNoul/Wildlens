@@ -8,9 +8,18 @@ import {
   TouchableOpacity,
   Switch,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const SettingsScreen = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const navigation = useNavigation();
+
+  const handleLogout = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Auth' }],
+    });
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -36,7 +45,7 @@ const SettingsScreen = () => {
       <View style={styles.settingsList}>
         <SettingItem title="Account" icon="person" />
         <SettingItem title="App Preferences" icon="tune" />
-        <Setting-Item title="Notifications" icon="notifications" />
+        <SettingItem title="Notifications" icon="notifications" />
         <SettingItem title="Privacy & Security" icon="privacy_tip" />
         <View style={styles.settingItem}>
           <Text>Dark Mode</Text>
@@ -44,7 +53,7 @@ const SettingsScreen = () => {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
 

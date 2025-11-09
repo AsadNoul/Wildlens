@@ -7,9 +7,18 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const AuthScreen = () => {
   const [activeTab, setActiveTab] = useState('Sign In');
+  const navigation = useNavigation();
+
+  const handleSignIn = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Main' }],
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -55,7 +64,10 @@ const AuthScreen = () => {
         </TouchableOpacity>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.signInButton}>
+          <TouchableOpacity
+            style={styles.signInButton}
+            onPress={handleSignIn}
+          >
             <Text style={styles.signInButtonText}>Sign In</Text>
           </TouchableOpacity>
 

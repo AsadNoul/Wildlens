@@ -34,13 +34,13 @@ const ExploreScreen = () => {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipContainer}>
         <TouchableOpacity style={[styles.chip, styles.activeChip]}>
-          <Text style={styles.chipText}>All</Text>
+          <Text style={[styles.chipText, styles.activeChipText]}>All</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.chip}>
-          <Text style={styles.chipText}>Mammals</Text>
+          <Text style={[styles.chipText, styles.inactiveChipText]}>Mammals</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.chip}>
-          <Text style={styles.chipText}>Birds</Text>
+          <Text style={[styles.chipText, styles.inactiveChipText]}>Birds</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -93,8 +93,12 @@ const styles = StyleSheet.create({
   activeChip: {
     backgroundColor: '#2f7f33',
   },
-  chipText: {
+  chipText: {},
+  activeChipText: {
     color: 'white',
+  },
+  inactiveChipText: {
+    color: '#111811',
   },
   gridContainer: {
     flexDirection: 'row',

@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 
 const SplashScreen = () => {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigation.replace('Onboarding');
+    }, 2000); // 2 seconds
+
+    return () => clearTimeout(timer);
+  }, [navigation]);
+
   return (
     <LinearGradient
       colors={['#2E7D32', '#FAF3E0']}

@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const OnboardingScreen = () => {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
@@ -22,10 +25,16 @@ const OnboardingScreen = () => {
           <View style={styles.indicator} />
         </View>
         <View style={styles.buttonGroup}>
-          <TouchableOpacity style={styles.skipButton}>
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => navigation.navigate('Auth')}
+          >
             <Text style={styles.skipButtonText}>Skip</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.nextButton}>
+          <TouchableOpacity
+            style={styles.nextButton}
+            onPress={() => navigation.navigate('Auth')}
+          >
             <Text style={styles.nextButtonText}>Next</Text>
           </TouchableOpacity>
         </View>
