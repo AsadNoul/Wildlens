@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,22 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from 'react-native';
-
-const exploreData = [
-  {
-    name: 'African Elephant',
-    location: 'Serengeti, Tanzania',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCLROagbwsIdZmiN4h1cbk57O61ZT4o71a02ySeSc6OdUzrxMQCzchowhn2Hu0IpZgF1ljIaR1YMcVyO7cH0gfZlmS8raMM6rf7mBIunxT_LgmscgHyvhHUs8gepvUPSsYj_QAZzgmMPqPLkhRjWZDyk58CF4e_7LCgILCoFcBIs4Kn9UJQnR37TGcbTcWw94q6zsGN5Is2w0UNGhTUSWBOL4pJ5rFyj2rdNUDXWwMtFEE1btdBrXvARxSxFp0H3eXEscIAHANpCDoG',
-  },
-  {
-    name: 'Macaw Parrot',
-    location: 'Amazon Rainforest',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDW8pBCgYdPJEvlpS8FAorf-SZ-NEKN6TwlXCBiXwhwGgqgpCFBtOJh2qAWUrifxCuheKCRllcVnIeB1WkOxKXmB-NAyMOTG5b9euHDJ4_eFrhLwNF0PguM0ldvLz7ejf0EBwpdOmxWtjz1Kvh25Kk-97wtbzIT4I-cCXLVl2iNKfylF_PyZeJi8S-TumiewueIndO8OQcSx3_peNgNX73hvhTdYtkuqDKybXjMfeUWbIhp49XGAavds85jbN7VTqNiQ3DXNXHA7zz1',
-  },
-  // Add more items...
-];
+import { getAnimals } from '../services/AnimalService';
+import { useNavigation } from '@react-navigation/native';
 
 const ExploreScreen = () => {
+  const [animals, setAnimals] = useState([]);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const fetchAnimals = async () => {
+      const data = await getAnimals('lion'); // Default search
+      setAnimals(data);
+    };
+
+    fetchAnimals();
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -45,12 +45,16 @@ const ExploreScreen = () => {
       </ScrollView>
 
       <View style={styles.gridContainer}>
-        {exploreData.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.gridItem}>
+        {animals.map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.gridItem}
+            onPress={() => navigation.navigate('AnimalDetail', { animal: item })}
+          >
             <ImageBackground source={{ uri: item.imageUrl }} style={styles.gridImage} imageStyle={{ borderRadius: 16 }}>
               <View style={styles.gridTextContainer}>
                 <Text style={styles.gridTitle}>{item.name}</Text>
-                <Text style={styles.gridSubtitle}>{item.location}</Text>
+                <Text style={styles.gridSubtitle}>{item.locations?.join(', ')}</Text>
               </View>
             </ImageBackground>
           </TouchableOpacity>

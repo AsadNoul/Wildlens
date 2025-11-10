@@ -7,24 +7,32 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const AnimalDetailScreen = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { animal } = route.params;
+
   return (
     <ScrollView style={styles.container}>
       <ImageBackground
-        source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAp4KUNIEcFtYAuUmVlvdZOvI8Kp4VdM5MoigqA-sbbJDeHKbrQTwQPSM9IDMBIO1pOKtbhKGmFxnTjFZHBo7mQ5MyUDcbk-7d5yYWpK6uolYFvdkofB2Y3LBLbZQRbaRYjgUTItxqTDujC9a6OWs2s6dEmt5EIrUrG5x2EZRrPtbIeHOMj4UZsj7ZgH60i4wTyi-jIJf6h4ayY32tLmz_vGYls-Fi0BnNNexfl4QIXm8M2iiW99BIidjXA7QWz4MLqS29HFyhpiQDF' }}
+        source={{ uri: animal.imageUrl }}
         style={styles.headerImage}
       >
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
       </ImageBackground>
 
       <View style={styles.headerContent}>
-        <Text style={styles.title}>Red Fox</Text>
-        <Text style={styles.subtitle}>Vulpes vulpes</Text>
+        <Text style={styles.title}>{animal.name}</Text>
+        <Text style={styles.subtitle}>{animal.taxonomy?.scientific_name}</Text>
         <View style={styles.chip}>
-          <Text style={styles.chipText}>Least Concern</Text>
+          <Text style={styles.chipText}>{animal.characteristics?.prey}</Text>
         </View>
       </View>
 
@@ -38,11 +46,15 @@ const AnimalDetailScreen = () => {
       <View style={styles.content}>
         <View style={styles.glassyCard}>
           <Text style={styles.cardTitle}>Quick Facts</Text>
-          {/* Add quick facts content here */}
+          <Text style={styles.cardText}>
+            Locations: {animal.locations?.join(', ')}
+          </Text>
         </View>
         <View style={styles.glassyCard}>
           <Text style={styles.cardTitle}>Characteristics</Text>
-          <Text style={styles.cardText}>The red fox has an elongated body and relatively short limbs...</Text>
+          <Text style={styles.cardText}>
+            {animal.characteristics?.most_distinctive_feature}
+          </Text>
         </View>
       </View>
 

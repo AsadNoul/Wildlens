@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,26 +8,22 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from 'react-native';
-
-const recentlyIdentified = [
-  {
-    name: 'Red Panda',
-    scientificName: 'Ailurus fulgens',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAMRyMUwaQVPD9nbVVzeqnwYMGNQ1PiUlzk67HGI45iIXNnlge3_tTHI0c9eWxs3PjWq_AOUxVCr2iPldSwhk6RH76gobsIJy47VvTQV2-sBCtTphjO0OybnDtNCBn8J24Ft2Mbk3qaOK_4hA_oW3G370GtJoR8MrtZ3lsyG2n_SbR9WBMMbaqydaUZhdoX1-57BdAqvoETujqy0JDcASTAVgWWllLGxPcvvuI9KLHKHGYa8wkPMJHN-zwUi0oSsjEjsPrajmgGvyBG',
-  },
-  {
-    name: 'Fennec Fox',
-    scientificName: 'Vulpes zerda',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVdxFGwv8T4y0R9C9N6ZN3Dod7K8aILYO6BDiiviaxlD8-n4gKAFPdRu63oyvxUbjoB_qh7ldKUYInt3pzeV-8ifgbXH5xp6eBOApmuxNWsdEQ0WVZywwalUgbzLB85k9chsCMEKd5xnTvjqCmKZrVmfjm1UckbtZFlFVmE2E_e45CL0vqmA_bzv2XYCL-PNhhKUrJ00tMkIGN2ymJh0gEX_PYLRF1wTDy-LkyoQdkUDswqTTgLphvXdBkCjh5FdaGmAHSEHcbWkoN',
-  },
-  {
-    name: 'Monarch',
-    scientificName: 'Danaus plexippus',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDApBQa5qqxNaWiMVIthYWwxJPrRcuGLH-UoODkQatyXO6rl6tJej7bBahQQtiR5xJ0A4DFhmnIZSYss0uJ3PW2gWqRHKHI2aBW9h8mOm-IdskIrcKZNCjw4s8MixuQ06q-6B9ReyfU7ogBLwpccSPo0G1YWTA3Sn0l2vIQzIlNzbOZpd5iYV_nO5pAIBY6WeecwiAaM52Wzmk9YoZHQ_rKMu4dCEjrHDn8tp2lhjYDSerBQAww0qjgcuAVNz9SQjgXTHHHhCoVzhwi',
-  },
-];
+import { getAnimals } from '../services/AnimalService';
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
+  const [recentlyIdentified, setRecentlyIdentified] = useState([]);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const fetchAnimals = async () => {
+      const data = await getAnimals('fox'); // Default search
+      setRecentlyIdentified(data);
+    };
+
+    fetchAnimals();
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>Welcome, Alex</Text>
@@ -43,12 +39,16 @@ const HomeScreen = () => {
       <Text style={styles.sectionTitle}>Recently Identified</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
         {recentlyIdentified.map((item, index) => (
-          <View key={index} style={styles.glassCard}>
+          <TouchableOpacity
+            key={index}
+            style={styles.glassCard}
+            onPress={() => navigation.navigate('AnimalDetail', { animal: item })}
+          >
             <ImageBackground source={{ uri: item.imageUrl }} style={styles.cardImage} imageStyle={{ borderRadius: 12 }}>
             </ImageBackground>
             <Text style={styles.cardTitle}>{item.name}</Text>
-            <Text style={styles.cardSubtitle}>{item.scientificName}</Text>
-          </View>
+            <Text style={styles.cardSubtitle}>{item.taxonomy?.scientific_name}</Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 
