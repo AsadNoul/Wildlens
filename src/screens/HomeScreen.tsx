@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const [recentlyIdentified, setRecentlyIdentified] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -24,6 +25,10 @@ const HomeScreen = () => {
     fetchAnimals();
   }, []);
 
+  const handleSearch = () => {
+    navigation.navigate('Explore', { searchQuery });
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>Welcome, Alex</Text>
@@ -33,6 +38,9 @@ const HomeScreen = () => {
           style={styles.searchBar}
           placeholder="Search animals or use camera"
           placeholderTextColor="#5e8760"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
         />
       </View>
 

@@ -8,17 +8,13 @@ import {
   TouchableOpacity,
   Switch,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
 
 const SettingsScreen = () => {
   const [isDarkMode, setIsDarkMode] = React.useState(false);
-  const navigation = useNavigation();
 
   const handleLogout = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Auth' }],
-    });
+    auth().signOut();
   };
 
   return (

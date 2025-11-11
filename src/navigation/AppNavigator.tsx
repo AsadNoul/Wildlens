@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import auth from '@react-native-firebase/auth';
 
-import SplashScreen from '../screens/SplashScreen';
-import OnboardingScreen from '../screens/OnboardingScreen';
-import AuthScreen from '../screens/AuthScreen';
-import HomeScreen from '../screens/HomeScreen';
-import ExploreScreen from '../screens/ExploreScreen';
-import AnimalDetailScreen from '../screens/AnimalDetailScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+import SplashScreen from '../screens/SplashScreen.tsx';
+import OnboardingScreen from '../screens/OnboardingScreen.tsx';
+import AuthScreen from '../screens/AuthScreen.tsx';
+import HomeScreen from '../screens/HomeScreen.tsx';
+import ExploreScreen from '../screens/ExploreScreen.tsx';
+import AnimalDetailScreen from '../screens/AnimalDetailScreen.tsx';
+import SettingsScreen from '../screens/SettingsScreen.tsx';
 import IdentifyScreen from '../screens/IdentifyScreen.tsx';
 import CollectionScreen from '../screens/CollectionScreen.tsx';
 import ProfileScreen from '../screens/ProfileScreen.tsx';
@@ -54,14 +55,35 @@ const MainTabs = () => {
 };
 
 const AppNavigator = () => {
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState();
+
+  function onAuthStateChanged(user) {
+    setUser(user);
+    if (initializing) setInitializing(false);
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  if (initializing) return <SplashScreen />;
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-        <Stack.Screen name="Auth" component={AuthScreen} />
-        <Stack.Screen name="Main" component={MainTabs} />
-        <Stack.Screen name="AnimalDetail" component={AnimalDetailScreen} />
+        {user ? (
+          <>
+            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen name="AnimalDetail" component={AnimalDetailScreen} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="Auth" component={AuthScreen} />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

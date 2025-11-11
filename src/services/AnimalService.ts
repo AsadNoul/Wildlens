@@ -1,7 +1,7 @@
 // @ts-ignore
-import { API_NINJAS_KEY, UNSPLASH_ACCESS_KEY } from '@env';
+import { API_NINJAS_KEY, UNSPLASH_ACCESS_KEY, ANIMAL_DETECT_KEY } from '@env';
 
-const useMockData = !API_NINJAS_KEY || !UNSPLASH_ACCESS_KEY;
+const useMockData = !API_NINJAS_KEY || !UNSPLASH_ACCESS_KEY || !ANIMAL_DETECT_KEY;
 
 const mockAnimals = [
   {
@@ -24,13 +24,11 @@ export const getAnimals = async (name: string) => {
   }
 
   try {
-    // 1. Fetch animal data from API Ninjas
     const animalResponse = await fetch(`https://api.api-ninjas.com/v1/animals?name=${name}`, {
       headers: { 'X-Api-Key': API_NINJAS_KEY },
     });
     const animalData = await animalResponse.json();
 
-    // 2. For each animal, fetch an image from Unsplash
     const animalsWithImages = await Promise.all(
       animalData.map(async (animal: any) => {
         const imageResponse = await fetch(
@@ -47,5 +45,35 @@ export const getAnimals = async (name: string) => {
   } catch (error) {
     console.error('Error fetching animal data:', error);
     return [];
+  }
+};
+
+export const identifyAnimal = async (imageUri: string) => {
+  if (useMockData) {
+    return 'Lion'; // Mock response
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('image', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'photo.jpg',
+    });
+
+    const response = await fetch('https://www.animaldetect.com/api/v1/detect', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ANIMAL_DETECT_KEY}`,
+        'Content-Type': 'multipart/form-data',
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    return data[0]?.taxa?.species;
+  } catch (error) {
+    console.error('Error identifying animal:', error);
+    return null;
   }
 };

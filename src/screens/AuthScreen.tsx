@@ -6,27 +6,50 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
 
 const AuthScreen = () => {
   const [activeTab, setActiveTab] = useState('Sign In');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigation = useNavigation();
 
-  const handleSignIn = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Main' }],
-    });
+  const handleSignIn = async () => {
+    try {
+      await auth().signInWithEmailAndPassword(email, password);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  const handleSignUp = async () => {
+    try {
+      await auth().createUserWithEmailAndPassword(email, password);
+      Alert.alert('Success', 'Account created successfully!');
+      setActiveTab('Sign In');
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.main}>
         <View style={styles.header}>
-          <Text style={styles.title}>Sign In to WildLens</Text>
+          <Text style={styles.title}>
+            {activeTab === 'Sign In' ? 'Sign In to WildLens' : 'Create an Account'}
+          </Text>
           <Text style={styles.subtitle}>
-            Welcome back! Please enter your details.
+            {activeTab === 'Sign In'
+              ? 'Welcome back! Please enter your details.'
+              : 'Get started with your WildLens journey.'}
           </Text>
         </View>
 
@@ -51,11 +74,15 @@ const AuthScreen = () => {
             placeholder="Enter your email"
             keyboardType="email-address"
             autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
           />
           <TextInput
             style={styles.input}
             placeholder="Enter your password"
             secureTextEntry
+            value={password}
+            onChangeText={setPassword}
           />
         </View>
 
@@ -66,9 +93,11 @@ const AuthScreen = () => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.signInButton}
-            onPress={handleSignIn}
+            onPress={activeTab === 'Sign In' ? handleSignIn : handleSignUp}
           >
-            <Text style={styles.signInButtonText}>Sign In</Text>
+            <Text style={styles.signInButtonText}>
+              {activeTab === 'Sign In' ? 'Sign In' : 'Sign Up'}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.orContainer}>

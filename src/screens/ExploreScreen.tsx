@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,60 +7,91 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
+  FlatList,
 } from 'react-native';
 import { getAnimals } from '../services/AnimalService';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import debounce from 'lodash.debounce';
+
+const filters = ['All', 'Mammals', 'Birds', 'Reptiles'];
 
 const ExploreScreen = () => {
   const [animals, setAnimals] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('All');
   const navigation = useNavigation();
+  const route = useRoute();
 
   useEffect(() => {
-    const fetchAnimals = async () => {
-      const data = await getAnimals('lion'); // Default search
-      setAnimals(data);
-    };
+    if (route.params?.searchQuery) {
+      setSearchQuery(route.params.searchQuery);
+    }
+  }, [route.params?.searchQuery]);
 
-    fetchAnimals();
-  }, []);
+  const fetchAnimals = async (query) => {
+    const data = await getAnimals(query);
+    setAnimals(data);
+  };
+
+  const debouncedFetchAnimals = useCallback(debounce(fetchAnimals, 500), []);
+
+  useEffect(() => {
+    let query = searchQuery;
+    if (activeFilter !== 'All') {
+      query = `${searchQuery} ${activeFilter}`;
+    }
+    debouncedFetchAnimals(query);
+  }, [searchQuery, activeFilter, debouncedFetchAnimals]);
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.gridItem}
+      onPress={() => navigation.navigate('AnimalDetail', { animal: item })}
+    >
+      <ImageBackground source={{ uri: item.imageUrl }} style={styles.gridImage} imageStyle={{ borderRadius: 16 }}>
+        <View style={styles.gridTextContainer}>
+          <Text style={styles.gridTitle}>{item.name}</Text>
+          <Text style={styles.gridSubtitle}>{item.locations?.join(', ')}</Text>
+        </View>
+      </ImageBackground>
+    </TouchableOpacity>
+  );
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Explore</Text>
       </View>
 
-      <TextInput style={styles.searchBar} placeholder="Search for species..." />
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Search for species..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipContainer}>
-        <TouchableOpacity style={[styles.chip, styles.activeChip]}>
-          <Text style={[styles.chipText, styles.activeChipText]}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.chip}>
-          <Text style={[styles.chipText, styles.inactiveChipText]}>Mammals</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.chip}>
-          <Text style={[styles.chipText, styles.inactiveChipText]}>Birds</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      <View style={styles.gridContainer}>
-        {animals.map((item, index) => (
+        {filters.map((filter) => (
           <TouchableOpacity
-            key={index}
-            style={styles.gridItem}
-            onPress={() => navigation.navigate('AnimalDetail', { animal: item })}
+            key={filter}
+            style={[styles.chip, activeFilter === filter && styles.activeChip]}
+            onPress={() => setActiveFilter(filter)}
           >
-            <ImageBackground source={{ uri: item.imageUrl }} style={styles.gridImage} imageStyle={{ borderRadius: 16 }}>
-              <View style={styles.gridTextContainer}>
-                <Text style={styles.gridTitle}>{item.name}</Text>
-                <Text style={styles.gridSubtitle}>{item.locations?.join(', ')}</Text>
-              </View>
-            </ImageBackground>
+            <Text style={[styles.chipText, activeFilter === filter ? styles.activeChipText : styles.inactiveChipText]}>
+              {filter}
+            </Text>
           </TouchableOpacity>
         ))}
-      </View>
-    </ScrollView>
+      </ScrollView>
+
+      <FlatList
+        data={animals}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.name}
+        numColumns={2}
+        style={styles.gridContainer}
+      />
+    </View>
   );
 };
 
@@ -105,15 +136,12 @@ const styles = StyleSheet.create({
     color: '#111811',
   },
   gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 8,
   },
   gridItem: {
-    width: '48%',
+    flex: 1,
+    margin: 8,
     aspectRatio: 0.75,
-    marginBottom: 16,
   },
   gridImage: {
     flex: 1,

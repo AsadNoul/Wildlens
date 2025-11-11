@@ -6,62 +6,97 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
+  Alert,
+  Linking,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const AnimalDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { animal } = route.params;
 
+  const saveToCollection = async () => {
+    try {
+      const existingCollection = await AsyncStorage.getItem('collection');
+      const collection = existingCollection ? JSON.parse(existingCollection) : [];
+
+      // Avoid duplicates
+      if (!collection.find(item => item.name === animal.name)) {
+        collection.push(animal);
+        await AsyncStorage.setItem('collection', JSON.stringify(collection));
+        Alert.alert('Success', `${animal.name} has been added to your collection.`);
+      } else {
+        Alert.alert('Info', `${animal.name} is already in your collection.`);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save animal to collection.');
+    }
+  };
+
+  const handleViewOnMap = () => {
+    const location = animal.locations?.[0];
+    if (location) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${location}`;
+      Linking.openURL(url);
+    }
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <ImageBackground
-        source={{ uri: animal.imageUrl }}
-        style={styles.headerImage}
-      >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.container}>
+        <ImageBackground
+          source={{ uri: animal.imageUrl }}
+          style={styles.headerImage}
         >
-          <Text style={styles.backButtonText}>←</Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+        </ImageBackground>
+
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>{animal.name}</Text>
+          <Text style={styles.subtitle}>{animal.taxonomy?.scientific_name}</Text>
+          <View style={styles.chip}>
+            <Text style={styles.chipText}>{animal.characteristics?.prey}</Text>
+          </View>
+        </View>
+
+        <View style={styles.tabContainer}>
+          {/* Simplified tab view */}
+          <Text style={[styles.tab, styles.activeTab]}>Overview</Text>
+          <Text style={styles.tab}>Habitat</Text>
+          <Text style={styles.tab}>Gallery</Text>
+        </View>
+
+        <View style={styles.content}>
+          <View style={styles.glassyCard}>
+            <Text style={styles.cardTitle}>Quick Facts</Text>
+            <Text style={styles.cardText}>
+              Locations: {animal.locations?.join(', ')}
+            </Text>
+          </View>
+          <View style={styles.glassyCard}>
+            <Text style={styles.cardTitle}>Characteristics</Text>
+            <Text style={styles.cardText}>
+              {animal.characteristics?.most_distinctive_feature}
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.mapButton} onPress={handleViewOnMap}>
+          <Text style={styles.mapButtonText}>View on Map</Text>
         </TouchableOpacity>
-      </ImageBackground>
-
-      <View style={styles.headerContent}>
-        <Text style={styles.title}>{animal.name}</Text>
-        <Text style={styles.subtitle}>{animal.taxonomy?.scientific_name}</Text>
-        <View style={styles.chip}>
-          <Text style={styles.chipText}>{animal.characteristics?.prey}</Text>
-        </View>
-      </View>
-
-      <View style={styles.tabContainer}>
-        {/* Simplified tab view */}
-        <Text style={[styles.tab, styles.activeTab]}>Overview</Text>
-        <Text style={styles.tab}>Habitat</Text>
-        <Text style={styles.tab}>Gallery</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.glassyCard}>
-          <Text style={styles.cardTitle}>Quick Facts</Text>
-          <Text style={styles.cardText}>
-            Locations: {animal.locations?.join(', ')}
-          </Text>
-        </View>
-        <View style={styles.glassyCard}>
-          <Text style={styles.cardTitle}>Characteristics</Text>
-          <Text style={styles.cardText}>
-            {animal.characteristics?.most_distinctive_feature}
-          </Text>
-        </View>
-      </View>
-
-      <TouchableOpacity style={styles.mapButton}>
-        <Text style={styles.mapButtonText}>View on Map</Text>
+      </ScrollView>
+      <TouchableOpacity style={styles.fab} onPress={saveToCollection}>
+        <Icon name="favorite" size={24} color="white" />
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -158,6 +193,18 @@ const styles = StyleSheet.create({
   mapButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
   },
 });
 
