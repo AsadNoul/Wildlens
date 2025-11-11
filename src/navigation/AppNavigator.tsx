@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import auth from '@react-native-firebase/auth';
+import { useTheme } from '../context/ThemeContext';
 
 import SplashScreen from '../screens/SplashScreen.tsx';
 import OnboardingScreen from '../screens/OnboardingScreen.tsx';
@@ -20,6 +21,7 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const MainTabs = () => {
+  const { theme } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -42,6 +44,9 @@ const MainTabs = () => {
 
           return <Icon name={iconName} size={size} color={color} />;
         },
+        tabBarActiveTintColor: theme.tabActive,
+        tabBarInactiveTintColor: theme.tabInactive,
+        tabBarStyle: { backgroundColor: theme.background },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -57,6 +62,7 @@ const MainTabs = () => {
 const AppNavigator = () => {
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState();
+  const { theme } = useTheme();
 
   function onAuthStateChanged(user) {
     setUser(user);
@@ -71,7 +77,7 @@ const AppNavigator = () => {
   if (initializing) return <SplashScreen />;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={{ colors: { background: theme.background } }}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <>

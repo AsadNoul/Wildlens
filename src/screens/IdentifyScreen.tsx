@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { identifyAnimal, getAnimals } from '../services/AnimalService';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 const IdentifyScreen = () => {
   const { hasPermission, requestPermission } = useCameraPermission();
@@ -12,6 +13,20 @@ const IdentifyScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const camera = useRef<Camera>(null);
   const navigation = useNavigation();
+  const route = useRoute();
+
+  const selectImage = () => {
+    launchImageLibrary({ mediaType: 'photo' }, (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+      } else {
+        const source = { uri: response.assets[0].uri, path: response.assets[0].uri };
+        setPhoto(source);
+      }
+    });
+  };
 
   useEffect(() => {
     const checkPermission = async () => {
@@ -22,6 +37,17 @@ const IdentifyScreen = () => {
     };
     checkPermission();
   }, [requestPermission]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (route.params?.openGallery) {
+        selectImage();
+        // Clear the param so it doesn't re-trigger
+        navigation.setParams({ openGallery: false });
+      }
+    }, [route.params?.openGallery])
+  );
+
 
   const takePhoto = async () => {
     if (camera.current) {
@@ -64,7 +90,7 @@ const IdentifyScreen = () => {
   if (photo) {
     return (
       <View style={styles.container}>
-        <Image source={{ uri: `file://${photo.path}` }} style={StyleSheet.absoluteFill} />
+        <Image source={{ uri: photo.uri }} style={StyleSheet.absoluteFill} />
         {isLoading ? (
           <ActivityIndicator size="large" color="white" />
         ) : (
@@ -92,6 +118,9 @@ const IdentifyScreen = () => {
       />
       <View style={styles.captureButtonContainer}>
         <TouchableOpacity style={styles.captureButton} onPress={takePhoto} />
+        <TouchableOpacity style={styles.galleryButton} onPress={selectImage}>
+          <Text style={styles.galleryButtonText}>Gallery</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -107,6 +136,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 50,
     alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   captureButton: {
     width: 70,
@@ -115,6 +146,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderWidth: 5,
     borderColor: 'gray',
+  },
+  galleryButton: {
+    marginLeft: 20,
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 5,
+  },
+  galleryButtonText: {
+    fontSize: 16,
+    color: 'black',
   },
   retakeButton: {
     position: 'absolute',

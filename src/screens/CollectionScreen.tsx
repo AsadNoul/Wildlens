@@ -7,14 +7,18 @@ import {
   ImageBackground,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 const CollectionScreen = () => {
   const [collection, setCollection] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
+  const { theme } = useTheme();
 
   const loadCollection = useCallback(async () => {
     setRefreshing(true);
@@ -26,6 +30,7 @@ const CollectionScreen = () => {
     } catch (error) {
       // Error retrieving data
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
   }, []);
@@ -49,18 +54,35 @@ const CollectionScreen = () => {
     </TouchableOpacity>
   );
 
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>My Collection</Text>
-      <FlatList
-        data={collection}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.name}
-        numColumns={2}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={loadCollection} />
-        }
-      />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.header, { color: theme.text }]}>My Collection</Text>
+      {collection.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: theme.text }]}>Your collection is empty.</Text>
+          <Text style={[styles.emptySubtext, { color: theme.tabInactive }]}>
+            Go identify some animals to add them to your collection!
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={collection}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.name}
+          numColumns={2}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={loadCollection} />
+          }
+        />
+      )}
     </View>
   );
 };
@@ -68,13 +90,11 @@ const CollectionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6f8f6',
     paddingHorizontal: 8,
   },
   header: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#111811',
     padding: 16,
     paddingTop: 50,
   },
@@ -96,6 +116,21 @@ const styles = StyleSheet.create({
   gridTitle: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  emptySubtext: {
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 32,
   },
 });
 

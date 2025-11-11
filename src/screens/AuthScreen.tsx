@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,28 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
+import { useTheme } from '../context/ThemeContext';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import appleAuth from '@invertase/react-native-apple-authentication';
+// @ts-ignore
+import { GOOGLE_WEB_CLIENT_ID } from '@env';
 
 const AuthScreen = () => {
   const [activeTab, setActiveTab] = useState('Sign In');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+    });
+  }, []);
 
   const handleSignIn = async () => {
     try {
@@ -39,14 +52,42 @@ const AuthScreen = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const { idToken } = await GoogleSignin.signIn();
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      await auth().signInWithCredential(googleCredential);
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    try {
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      const { identityToken } = appleAuthRequestResponse;
+      const appleCredential = auth.AppleAuthProvider.credential(identityToken);
+      await auth().signInWithCredential(appleCredential);
+    } catch (error) {
+      if (error.code !== appleAuth.Error.CANCELED) {
+        Alert.alert('Error', error.message);
+      }
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.main}>
         <View style={styles.header}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: theme.text }]}>
             {activeTab === 'Sign In' ? 'Sign In to WildLens' : 'Create an Account'}
           </Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: theme.tabInactive }]}>
             {activeTab === 'Sign In'
               ? 'Welcome back! Please enter your details.'
               : 'Get started with your WildLens journey.'}
@@ -58,28 +99,30 @@ const AuthScreen = () => {
             style={[styles.tab, activeTab === 'Sign In' && styles.activeTab]}
             onPress={() => setActiveTab('Sign In')}
           >
-            <Text style={styles.tabText}>Sign In</Text>
+            <Text style={[styles.tabText, { color: theme.text }]}>Sign In</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'Sign Up' && styles.activeTab]}
             onPress={() => setActiveTab('Sign Up')}
           >
-            <Text style={styles.tabText}>Sign Up</Text>
+            <Text style={[styles.tabText, { color: theme.text }]}>Sign Up</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.form}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
             placeholder="Enter your email"
+            placeholderTextColor={theme.tabInactive}
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
             placeholder="Enter your password"
+            placeholderTextColor={theme.tabInactive}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -87,31 +130,39 @@ const AuthScreen = () => {
         </View>
 
         <TouchableOpacity>
-          <Text style={styles.forgotPassword}>Forgot password?</Text>
+          <Text style={[styles.forgotPassword, { color: theme.primary }]}>Forgot password?</Text>
         </TouchableOpacity>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.signInButton}
+            style={[styles.signInButton, { backgroundColor: theme.primary }]}
             onPress={activeTab === 'Sign In' ? handleSignIn : handleSignUp}
           >
-            <Text style={styles.signInButtonText}>
+            <Text style={[styles.signInButtonText, { color: theme.background }]}>
               {activeTab === 'Sign In' ? 'Sign In' : 'Sign Up'}
             </Text>
           </TouchableOpacity>
 
           <View style={styles.orContainer}>
             <View style={styles.divider} />
-            <Text style={styles.orText}>OR</Text>
+            <Text style={[styles.orText, { color: theme.tabInactive }]}>OR</Text>
             <View style={styles.divider} />
           </View>
 
-          <TouchableOpacity style={styles.socialButton}>
-            <Text>Continue with Google</Text>
+          <TouchableOpacity
+            style={[styles.socialButton, { backgroundColor: theme.card }]}
+            onPress={handleGoogleSignIn}
+          >
+            <Text style={{ color: theme.text }}>Continue with Google</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Text>Continue with Apple</Text>
-          </TouchableOpacity>
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={[styles.socialButton, { backgroundColor: theme.card }]}
+              onPress={handleAppleSignIn}
+            >
+              <Text style={{ color: theme.text }}>Continue with Apple</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -121,7 +172,6 @@ const AuthScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6f8f6',
     justifyContent: 'center',
     padding: 16,
   },
@@ -137,18 +187,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#111811',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
     textAlign: 'center',
     marginTop: 4,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#e5e7eb',
     borderRadius: 8,
     padding: 4,
     marginBottom: 24,
@@ -170,7 +217,6 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
   },
   form: {
     gap: 16,
@@ -181,11 +227,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   forgotPassword: {
     textAlign: 'right',
-    color: '#2f7f33',
     fontSize: 14,
     fontWeight: '500',
     marginTop: 12,
@@ -196,13 +240,11 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     height: 48,
-    backgroundColor: '#2f7f33',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   signInButtonText: {
-    color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -219,7 +261,6 @@ const styles = StyleSheet.create({
   orText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: '#6b7280',
   },
   socialButton: {
     height: 48,
@@ -228,7 +269,6 @@ const styles = StyleSheet.create({
     borderColor: '#d1d5db',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
   },
 });
 

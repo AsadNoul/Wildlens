@@ -12,18 +12,19 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useTheme } from '../context/ThemeContext';
 
 const AnimalDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { animal } = route.params;
+  const { theme } = useTheme();
 
   const saveToCollection = async () => {
     try {
       const existingCollection = await AsyncStorage.getItem('collection');
       const collection = existingCollection ? JSON.parse(existingCollection) : [];
 
-      // Avoid duplicates
       if (!collection.find(item => item.name === animal.name)) {
         collection.push(animal);
         await AsyncStorage.setItem('collection', JSON.stringify(collection));
@@ -45,8 +46,8 @@ const AnimalDetailScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
         <ImageBackground
           source={{ uri: animal.imageUrl }}
           style={styles.headerImage}
@@ -60,37 +61,36 @@ const AnimalDetailScreen = () => {
         </ImageBackground>
 
         <View style={styles.headerContent}>
-          <Text style={styles.title}>{animal.name}</Text>
-          <Text style={styles.subtitle}>{animal.taxonomy?.scientific_name}</Text>
-          <View style={styles.chip}>
-            <Text style={styles.chipText}>{animal.characteristics?.prey}</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{animal.name}</Text>
+          <Text style={[styles.subtitle, { color: theme.tabInactive }]}>{animal.taxonomy?.scientific_name}</Text>
+          <View style={[styles.chip, { backgroundColor: theme.chip }]}>
+            <Text style={[styles.chipText, { color: theme.chipText }]}>{animal.characteristics?.prey}</Text>
           </View>
         </View>
 
         <View style={styles.tabContainer}>
-          {/* Simplified tab view */}
-          <Text style={[styles.tab, styles.activeTab]}>Overview</Text>
-          <Text style={styles.tab}>Habitat</Text>
-          <Text style={styles.tab}>Gallery</Text>
+          <Text style={[styles.tab, styles.activeTab, { color: theme.tabActive, borderBottomColor: theme.primary }]}>Overview</Text>
+          <Text style={[styles.tab, { color: theme.tabInactive }]}>Habitat</Text>
+          <Text style={[styles.tab, { color: theme.tabInactive }]}>Gallery</Text>
         </View>
 
         <View style={styles.content}>
-          <View style={styles.glassyCard}>
-            <Text style={styles.cardTitle}>Quick Facts</Text>
-            <Text style={styles.cardText}>
+          <View style={[styles.glassyCard, { backgroundColor: theme.card }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Quick Facts</Text>
+            <Text style={[styles.cardText, { color: theme.text }]}>
               Locations: {animal.locations?.join(', ')}
             </Text>
           </View>
-          <View style={styles.glassyCard}>
-            <Text style={styles.cardTitle}>Characteristics</Text>
-            <Text style={styles.cardText}>
+          <View style={[styles.glassyCard, { backgroundColor: theme.card }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Characteristics</Text>
+            <Text style={[styles.cardText, { color: theme.text }]}>
               {animal.characteristics?.most_distinctive_feature}
             </Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.mapButton} onPress={handleViewOnMap}>
-          <Text style={styles.mapButtonText}>View on Map</Text>
+        <TouchableOpacity style={[styles.mapButton, { backgroundColor: theme.primary }]} onPress={handleViewOnMap}>
+          <Text style={[styles.mapButtonText, { color: theme.background }]}>View on Map</Text>
         </TouchableOpacity>
       </ScrollView>
       <TouchableOpacity style={styles.fab} onPress={saveToCollection}>
@@ -103,7 +103,6 @@ const AnimalDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6f8f6',
   },
   headerImage: {
     height: 320,
@@ -135,10 +134,8 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     fontStyle: 'italic',
-    color: '#6b7280',
   },
   chip: {
-    backgroundColor: '#dcfce7',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 16,
@@ -146,7 +143,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   chipText: {
-    color: '#166534',
     fontWeight: '500',
   },
   tabContainer: {
@@ -158,19 +154,15 @@ const styles = StyleSheet.create({
   tab: {
     padding: 16,
     fontSize: 16,
-    color: '#6b7280',
   },
   activeTab: {
-    color: '#111811',
     borderBottomWidth: 3,
-    borderBottomColor: '#2f7f33',
   },
   content: {
     padding: 16,
     gap: 16,
   },
   glassyCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 16,
     padding: 16,
   },
@@ -185,13 +177,11 @@ const styles = StyleSheet.create({
   },
   mapButton: {
     margin: 16,
-    backgroundColor: '#2f7f33',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
   },
   mapButtonText: {
-    color: 'white',
     fontWeight: 'bold',
   },
   fab: {

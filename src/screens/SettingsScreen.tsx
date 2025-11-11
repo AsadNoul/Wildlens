@@ -9,21 +9,22 @@ import {
   Switch,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
+import { useTheme } from '../context/ThemeContext';
 
 const SettingsScreen = () => {
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const { isDarkMode, toggleTheme, theme } = useTheme();
 
   const handleLogout = () => {
     auth().signOut();
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <TouchableOpacity>
-          <Text>Back</Text>
+          <Text style={{ color: theme.text }}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Settings</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -33,19 +34,19 @@ const SettingsScreen = () => {
           style={styles.avatar}
         />
         <View>
-          <Text style={styles.profileName}>Elara Vance</Text>
+          <Text style={[styles.profileName, { color: theme.text }]}>Elara Vance</Text>
           <Text style={styles.profileEmail}>elara.vance@example.com</Text>
         </View>
       </View>
 
       <View style={styles.settingsList}>
-        <SettingItem title="Account" icon="person" />
-        <SettingItem title="App Preferences" icon="tune" />
-        <SettingItem title="Notifications" icon="notifications" />
-        <SettingItem title="Privacy & Security" icon="privacy_tip" />
+        <SettingItem title="Account" icon="person" theme={theme} />
+        <SettingItem title="App Preferences" icon="tune" theme={theme} />
+        <SettingItem title="Notifications" icon="notifications" theme={theme} />
+        <SettingItem title="Privacy & Security" icon="privacy_tip" theme={theme} />
         <View style={styles.settingItem}>
-          <Text>Dark Mode</Text>
-          <Switch value={isDarkMode} onValueChange={setIsDarkMode} />
+          <Text style={{ color: theme.text }}>Dark Mode</Text>
+          <Switch value={isDarkMode} onValueChange={toggleTheme} />
         </View>
       </View>
 
@@ -58,18 +59,17 @@ const SettingsScreen = () => {
   );
 };
 
-const SettingItem = ({ title, icon }) => (
+const SettingItem = ({ title, icon, theme }) => (
   <TouchableOpacity style={styles.settingItem}>
-    <Text>{icon}</Text>
-    <Text style={styles.settingItemText}>{title}</Text>
-    <Text>›</Text>
+    <Text style={{ color: theme.text }}>{icon}</Text>
+    <Text style={[styles.settingItemText, { color: theme.text }]}>{title}</Text>
+    <Text style={{ color: theme.text }}>›</Text>
   </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6f8f6',
   },
   header: {
     flexDirection: 'row',
