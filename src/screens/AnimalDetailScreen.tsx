@@ -8,17 +8,33 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  Modal,
+  Image,
+  ActivityIndicator,
+  FlatList,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from '../context/ThemeContext';
+import { getAnimalHabitat } from '../services/AnimalService';
 
 const AnimalDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { animal } = route.params;
   const { theme } = useTheme();
+  const [activeTab, setActiveTab] = React.useState('Overview');
+  const [selectedImage, setSelectedImage] = React.useState(null);
+  const [habitatData, setHabitatData] = React.useState(null);
+
+  React.useEffect(() => {
+    const fetchHabitatData = async () => {
+      const data = await getAnimalHabitat(animal.name);
+      setHabitatData(data);
+    };
+    fetchHabitatData();
+  }, [animal.name]);
 
   const saveToCollection = async () => {
     try {
@@ -45,6 +61,63 @@ const AnimalDetailScreen = () => {
     }
   };
 
+  const renderContent = () => {
+    if (activeTab === 'Habitat') {
+      if (!habitatData) {
+        return (
+          <View style={styles.content}>
+            <ActivityIndicator size="large" color={theme.primary} />
+          </View>
+        );
+      }
+      return (
+        <View style={styles.content}>
+          <View style={[styles.glassyCard, { backgroundColor: theme.card }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Habitat</Text>
+            <Text style={[styles.cardText, { color: theme.text }]}>{habitatData.habitat}</Text>
+          </View>
+          <View style={[styles.glassyCard, { backgroundColor: theme.card }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Diet</Text>
+            <Text style={[styles.cardText, { color: theme.text }]}>{habitatData.diet}</Text>
+          </View>
+        </View>
+      );
+    }
+
+    if (activeTab === 'Gallery') {
+      return (
+        <FlatList
+          data={animal.galleryImageUrls}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.galleryItem} onPress={() => setSelectedImage(item)}>
+              <ImageBackground source={{ uri: item }} style={styles.galleryImage} imageStyle={{ borderRadius: 16 }} />
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item, index) => index.toString()}
+          numColumns={2}
+          style={styles.galleryContainer}
+        />
+      );
+    }
+
+    return (
+      <View style={styles.content}>
+        <View style={[styles.glassyCard, { backgroundColor: theme.card }]}>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>Quick Facts</Text>
+              <Text style={[styles.cardText, { color: theme.text }]}>
+                Locations: {animal.locations?.join(', ')}
+              </Text>
+            </View>
+            <View style={[styles.glassyCard, { backgroundColor: theme.card }]}>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>Characteristics</Text>
+              <Text style={[styles.cardText, { color: theme.text }]}>
+                {animal.characteristics?.most_distinctive_feature}
+              </Text>
+            </View>
+          </View>
+    );
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -69,33 +142,30 @@ const AnimalDetailScreen = () => {
         </View>
 
         <View style={styles.tabContainer}>
-          <Text style={[styles.tab, styles.activeTab, { color: theme.tabActive, borderBottomColor: theme.primary }]}>Overview</Text>
-          <Text style={[styles.tab, { color: theme.tabInactive }]}>Habitat</Text>
-          <Text style={[styles.tab, { color: theme.tabInactive }]}>Gallery</Text>
+          <TouchableOpacity onPress={() => setActiveTab('Overview')}>
+            <Text style={[styles.tab, activeTab === 'Overview' && styles.activeTab, { color: activeTab === 'Overview' ? theme.tabActive : theme.tabInactive, borderBottomColor: theme.primary }]}>Overview</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveTab('Habitat')}>
+            <Text style={[styles.tab, activeTab === 'Habitat' && styles.activeTab, { color: activeTab === 'Habitat' ? theme.tabActive : theme.tabInactive, borderBottomColor: theme.primary }]}>Habitat</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveTab('Gallery')}>
+            <Text style={[styles.tab, activeTab === 'Gallery' && styles.activeTab, { color: activeTab === 'Gallery' ? theme.tabActive : theme.tabInactive, borderBottomColor: theme.primary }]}>Gallery</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.content}>
-          <View style={[styles.glassyCard, { backgroundColor: theme.card }]}>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>Quick Facts</Text>
-            <Text style={[styles.cardText, { color: theme.text }]}>
-              Locations: {animal.locations?.join(', ')}
-            </Text>
-          </View>
-          <View style={[styles.glassyCard, { backgroundColor: theme.card }]}>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>Characteristics</Text>
-            <Text style={[styles.cardText, { color: theme.text }]}>
-              {animal.characteristics?.most_distinctive_feature}
-            </Text>
-          </View>
-        </View>
-
-        <TouchableOpacity style={[styles.mapButton, { backgroundColor: theme.primary }]} onPress={handleViewOnMap}>
-          <Text style={[styles.mapButtonText, { color: theme.background }]}>View on Map</Text>
-        </TouchableOpacity>
+        {renderContent()}
       </ScrollView>
       <TouchableOpacity style={styles.fab} onPress={saveToCollection}>
         <Icon name="favorite" size={24} color="white" />
       </TouchableOpacity>
+      <Modal visible={selectedImage !== null} transparent={true}>
+        <View style={styles.modalContainer}>
+          <Image source={{ uri: selectedImage }} style={styles.fullscreenImage} />
+          <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedImage(null)}>
+            <Text style={styles.closeButtonText}>X</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -195,6 +265,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
+  },
+  galleryContainer: {
+    paddingHorizontal: 8,
+  },
+  galleryItem: {
+    flex: 1,
+    margin: 8,
+    aspectRatio: 1,
+  },
+  galleryImage: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImage: {
+    width: '100%',
+    height: '80%',
+    resizeMode: 'contain',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 10,
+    borderRadius: 20,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 18,
   },
 });
 

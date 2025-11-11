@@ -1,7 +1,7 @@
 // @ts-ignore
-import { API_NINJAS_KEY, UNSPLASH_ACCESS_KEY, ANIMAL_DETECT_KEY } from '@env';
+import { API_NINJAS_KEY, UNSPLASH_ACCESS_KEY, ANIMAL_DETECT_KEY, ANIMAL_DISCOVERY_KEY } from '@env';
 
-const useMockData = !API_NINJAS_KEY || !UNSPLASH_ACCESS_KEY || !ANIMAL_DETECT_KEY;
+const useMockData = !API_NINJAS_KEY || !UNSPLASH_ACCESS_KEY || !ANIMAL_DETECT_KEY || !ANIMAL_DISCOVERY_KEY;
 
 const mockAnimals = [
   {
@@ -36,8 +36,8 @@ export const getAnimals = async (name: string) => {
         );
         const imageData = await imageResponse.json();
         const imageUrl = imageData.results[0]?.urls?.regular;
-
-        return { ...animal, imageUrl };
+        const galleryImageUrls = imageData.results?.slice(0, 10).map((result: any) => result.urls.regular);
+        return { ...animal, imageUrl, galleryImageUrls };
       })
     );
 
@@ -74,6 +74,26 @@ export const identifyAnimal = async (imageUri: string) => {
     return data[0]?.taxa?.species;
   } catch (error) {
     console.error('Error identifying animal:', error);
+    return null;
+  }
+};
+
+export const getAnimalHabitat = async (name: string) => {
+  if (useMockData) {
+    return {
+      habitat: 'Forests, mountains, and grasslands',
+      diet: 'Omnivore',
+    };
+  }
+
+  try {
+    const response = await fetch(`https://api.zylalabs.com/v1/animals/${name}/habitat`, {
+      headers: { 'Authorization': `Bearer ${ANIMAL_DISCOVERY_KEY}` },
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching animal habitat:', error);
     return null;
   }
 };
